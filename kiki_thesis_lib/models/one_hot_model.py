@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tensorflow import keras
 
-from utils import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
+from kiki_thesis_lib.utils import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
 
 
 class OneHotSeq2Seq:
