@@ -150,6 +150,13 @@ def one_hot_map(input_data, target_data, input_vocab_size, output_vocab_size):
 	return (encoder_input_data, decoder_input_data), decoder_target_data
 
 
+def one_hot_target_data_map(input_data, target_data, output_vocab_size):
+	encoder_input_data = input_data[0]
+	decoder_input_data = input_data[1]
+	decoder_target_data = tf.one_hot(target_data, depth=output_vocab_size)
+	return (encoder_input_data, decoder_input_data), decoder_target_data
+
+
 def reverse_one_hot(sequences, tokenizer, character_level):
 	if character_level:
 		return reverse_one_hot_characters(sequences, tokenizer)
