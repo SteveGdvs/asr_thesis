@@ -25,6 +25,7 @@ class OneHotSeq2Seq:
 		self._max_decoder_seq_length = max_decoder_seq_length
 		self._target_token_index = target_token_index
 		self._target_index_token = target_index_token
+		self._inference_models = None
 
 	def create_model(self, optimizer=None, line_length=300, summary=True):
 
@@ -182,7 +183,11 @@ class OneHotSeq2Seq:
 			end_token = WORD_END_TOKEN
 			join_str = " "
 
-		encoder_model, decoder_model = self._create_inference_models()
+		if self._inference_models is None:
+			encoder_model, decoder_model = self._create_inference_models()
+			self._inference_models = encoder_model, decoder_model
+		else:
+			encoder_model, decoder_model = self._inference_models
 
 		states_value = encoder_model.predict(input_seq)
 
