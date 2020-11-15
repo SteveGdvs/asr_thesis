@@ -4,6 +4,6 @@ __pycache__/
 *$py.class
 
 main.py
-ell.txt
+*.txt
 
 .idea
