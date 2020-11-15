@@ -42,16 +42,18 @@ def load_data(path, lines_limit=None, max_length=None, remove_duplicates=True, r
 		del target_texts_max_length  # free memory
 
 	if remove_duplicates:
-		input_texts_no_dup = set()  # for speed
+		texts_dup_set = set()
+		input_texts_no_dup = []
 		target_texts_no_dup = []
 
 		for in_txt, tar_txt in zip(input_texts, target_texts):
-			if in_txt not in input_texts_no_dup:
-				input_texts_no_dup.add(in_txt)
+			if in_txt not in texts_dup_set:
+				texts_dup_set.add(in_txt)
+				input_texts_no_dup.append(in_txt)
 				target_texts_no_dup.append(tar_txt)
 
 		print("- Removed {0} duplicates".format(len(input_texts) - len(input_texts_no_dup)))
-		input_texts = list(input_texts_no_dup)
+		input_texts = input_texts_no_dup
 		target_texts = target_texts_no_dup
 		del input_texts_no_dup  # free memory
 		del target_texts_no_dup  # free memory
