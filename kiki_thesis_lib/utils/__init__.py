@@ -7,12 +7,12 @@ from .constants import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, CHARACTER_PAD
 from .preprocessing import unicode_to_ascii, remove_numbers_from_texts, unicode_to_ascii_from_texts, add_space_between_word_punctuation, reverse_one_hot_characters, reverse_one_hot_words
 
 
-def load_data(path, limit=None, max_length=None, remove_duplicates=False, remove_in_list=None):
+def load_data(path, lines_limit=None, max_length=None, remove_duplicates=True, remove_in_list=None):
 	with open(path, encoding="utf_8") as f:
 		lines = f.readlines()
 
-	if limit is not None:
-		lines = lines[: min(limit, len(lines) - 1)]
+	if lines_limit is not None:
+		lines = lines[: min(lines_limit, len(lines) - 1)]
 
 	input_texts = []
 	target_texts = []
@@ -42,18 +42,16 @@ def load_data(path, limit=None, max_length=None, remove_duplicates=False, remove
 		del target_texts_max_length  # free memory
 
 	if remove_duplicates:
-		input_texts_no_dup = []
+		input_texts_no_dup = set()  # for speed
 		target_texts_no_dup = []
 
 		for in_txt, tar_txt in zip(input_texts, target_texts):
-			if in_txt in input_texts_no_dup:
-				continue
-			else:
-				input_texts_no_dup.append(in_txt)
+			if in_txt not in input_texts_no_dup:
+				input_texts_no_dup.add(in_txt)
 				target_texts_no_dup.append(tar_txt)
 
 		print("- Removed {0} duplicates".format(len(input_texts) - len(input_texts_no_dup)))
-		input_texts = input_texts_no_dup
+		input_texts = list(input_texts_no_dup)
 		target_texts = target_texts_no_dup
 		del input_texts_no_dup  # free memory
 		del target_texts_no_dup  # free memory
@@ -63,9 +61,7 @@ def load_data(path, limit=None, max_length=None, remove_duplicates=False, remove
 			input_texts_temp = []
 			target_texts_temp = []
 			for in_txt, tar_txt in zip(input_texts, target_texts):
-				if word.lower() in in_txt.lower():
-					continue
-				else:
+				if word.lower() not in in_txt.lower():
 					input_texts_temp.append(in_txt)
 					target_texts_temp.append(tar_txt)
 
