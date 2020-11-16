@@ -70,7 +70,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self._rnn_type)
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq: {0}".format(self._rnn_type))
 		return model
 
 	def _create_gru(self):
@@ -93,7 +93,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self._rnn_type)
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq: {0}".format(self._rnn_type))
 		return model
 
 	def _create_bidirectional_lstm(self):
@@ -118,7 +118,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self._rnn_type)
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq: {0}".format(self._rnn_type))
 		return model
 
 	def _create_bidirectional_gru(self):
@@ -142,7 +142,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self._rnn_type)
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq: {0}".format(self._rnn_type))
 		return model
 
 	def fit(self, data, epochs, validation_data=None, callbacks=None, **kwargs):
@@ -288,9 +288,9 @@ class EmbeddingSeq2Seq(Seq2Seq):
 	def plot_history(self, figsize=(25, 15)):
 		fig, axs = plt.subplots(2, figsize=figsize)
 		if self._character_level:
-			fig.suptitle("RNN Type: {0} Character level tokenization".format(self._rnn_type))
+			fig.suptitle("EmbeddingSeq2Seq: {0} Character level tokenization".format(self._rnn_type))
 		else:
-			fig.suptitle("RNN Type: {0} Character word tokenization".format(self._rnn_type))
+			fig.suptitle("EmbeddingSeq2Seq {0} Word level tokenization".format(self._rnn_type))
 		axs[0].set_title("Train loss and accuracy")
 		axs[0].plot(self._train_history["loss"], label="train loss")
 		axs[0].plot(self._train_history["val_loss"], label="validation loss")
