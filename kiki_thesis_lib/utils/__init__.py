@@ -141,7 +141,7 @@ def word_level_tokenization(input_texts, target_texts, to_lower=True, to_ascii=T
 	return (input_sequences, target_sequences, decoder_target_seq), (input_tokenizer, target_tokenizer)
 
 
-def prepare_for_translate(sentences, input_tokenizer, max_encoder_seq_length, character_level, one_hot, to_lower=None, to_ascii=None, remove_numbers=None):
+def prepare_for_translation(sentences, input_tokenizer, max_encoder_seq_length, character_level, one_hot, to_lower=None, to_ascii=None, remove_numbers=None):
 	if character_level:
 		if to_ascii is None:
 			to_ascii = False
