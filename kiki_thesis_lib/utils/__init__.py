@@ -4,7 +4,8 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 
 from .constants import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, CHARACTER_PAD_TOKEN, WORD_END_TOKEN, WORD_START_TOKEN, WORD_PAD_TOKEN
-from .preprocessing import unicode_to_ascii, remove_numbers_from_texts, unicode_to_ascii_from_texts, add_space_between_word_punctuation, reverse_one_hot_characters, reverse_one_hot_words
+from .preprocessing import unicode_to_ascii, remove_numbers_from_texts, unicode_to_ascii_from_texts, add_space_between_word_punctuation, reverse_one_hot_character_level, reverse_one_hot_word_level, \
+	reverse_tokenization_character_level, reverse_tokenization_word_level
 
 
 def load_data(path, lines_limit=None, max_length=None, remove_duplicates=True, remove_in_list=None):
@@ -80,10 +81,12 @@ def load_data(path, lines_limit=None, max_length=None, remove_duplicates=True, r
 
 def character_level_tokenization(input_texts, target_texts, to_lower=False, to_ascii=False, remove_numbers=False):
 	if remove_numbers:
-		input_texts, target_texts = remove_numbers_from_texts(input_texts, target_texts)
+		input_texts = remove_numbers_from_texts(input_texts)
+		target_texts = remove_numbers_from_texts(target_texts)
 
 	if to_ascii:
-		input_texts, target_texts = unicode_to_ascii_from_texts(input_texts, target_texts)
+		input_texts = unicode_to_ascii_from_texts(input_texts)
+		target_texts = unicode_to_ascii_from_texts(target_texts)
 
 	target_texts = [CHARACTER_START_TOKEN + sentence + CHARACTER_END_TOKEN for sentence in target_texts]
 
@@ -106,21 +109,26 @@ def character_level_tokenization(input_texts, target_texts, to_lower=False, to_a
 
 def word_level_tokenization(input_texts, target_texts, to_lower=True, to_ascii=True, remove_numbers=True):
 	if remove_numbers:
-		input_texts, target_texts = remove_numbers_from_texts(input_texts, target_texts)
+		input_texts = remove_numbers_from_texts(input_texts)
+		target_texts = remove_numbers_from_texts(target_texts)
 
 	if to_ascii:
-		input_texts, target_texts = unicode_to_ascii_from_texts(input_texts, target_texts)
+		input_texts = unicode_to_ascii_from_texts(input_texts)
+		target_texts = unicode_to_ascii_from_texts(target_texts)
 
-	input_texts, target_texts = add_space_between_word_punctuation(input_texts, target_texts)
+	input_texts = add_space_between_word_punctuation(input_texts)
+	target_texts = add_space_between_word_punctuation(target_texts)
 
 	input_texts = [WORD_START_TOKEN + " " + sentence + " " + WORD_END_TOKEN for sentence in input_texts]
 	target_texts = [WORD_START_TOKEN + " " + sentence + " " + WORD_END_TOKEN for sentence in target_texts]
 
 	input_tokenizer = Tokenizer(filters='', char_level=False, lower=to_lower)
 	input_tokenizer.fit_on_texts(input_texts)
+	input_tokenizer.fit_on_texts([WORD_PAD_TOKEN])
 
 	target_tokenizer = Tokenizer(filters='', char_level=False, lower=to_lower)
 	target_tokenizer.fit_on_texts(target_texts)
+	target_tokenizer.fit_on_texts([WORD_PAD_TOKEN])
 
 	input_sequences = input_tokenizer.texts_to_sequences(input_texts)
 	target_sequences = target_tokenizer.texts_to_sequences(target_texts)
@@ -133,14 +141,44 @@ def word_level_tokenization(input_texts, target_texts, to_lower=True, to_ascii=T
 	return (input_sequences, target_sequences, decoder_target_seq), (input_tokenizer, target_tokenizer)
 
 
-def prepare_for_one_hot_translate(sentences, input_tokenizer, max_encoder_seq_length, character_level):
-	sequences = input_tokenizer.texts_to_sequences(sentences)
+def prepare_for_translate(sentences, input_tokenizer, max_encoder_seq_length, character_level, one_hot, to_lower=None, to_ascii=None, remove_numbers=None):
 	if character_level:
+		if to_ascii is None:
+			to_ascii = False
+		if remove_numbers is None:
+			remove_numbers = False
+		if to_lower is None:
+			to_lower = False
+
+		if remove_numbers:
+			sentences = remove_numbers_from_texts(sentences)
+		if to_ascii:
+			sentences = unicode_to_ascii_from_texts(sentences)
+		if to_lower:
+			sentences = [sentence.lower() for sentence in sentences]
+		sequences = input_tokenizer.texts_to_sequences(sentences)
 		sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=max_encoder_seq_length, padding='post', value=input_tokenizer.word_index[CHARACTER_PAD_TOKEN])
 	else:
+		if to_ascii is None:
+			to_ascii = True
+		if remove_numbers is None:
+			remove_numbers = True
+		if to_lower is None:
+			to_lower = True
+
+		if remove_numbers:
+			sentences = remove_numbers_from_texts(sentences)
+		if to_ascii:
+			sentences = unicode_to_ascii_from_texts(sentences)
+		if to_lower:
+			sentences = [sentence.lower() for sentence in sentences]
+
+		sentences = add_space_between_word_punctuation(sentences)
+		sequences = input_tokenizer.texts_to_sequences(sentences)
 		sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=max_encoder_seq_length, padding='post', value=input_tokenizer.word_index[WORD_PAD_TOKEN])
 
-	sequences = tf.keras.utils.to_categorical(sequences, num_classes=len(input_tokenizer.index_word) + 1)
+	if one_hot:
+		sequences = tf.keras.utils.to_categorical(sequences, num_classes=len(input_tokenizer.index_word) + 1)
 
 	return sequences
 
@@ -161,6 +199,21 @@ def one_hot_target_data_map(input_data, target_data, output_vocab_size):
 
 def reverse_one_hot(sequences, tokenizer, character_level):
 	if character_level:
-		return reverse_one_hot_characters(sequences, tokenizer)
+		result = reverse_one_hot_character_level(sequences, tokenizer)
 	else:
-		return reverse_one_hot_words(sequences, tokenizer)
+		result = reverse_one_hot_word_level(sequences, tokenizer)
+
+	if len(result) == 1:
+		result = result[0]
+	return result
+
+
+def reverse_tokenization(sequences, tokenizer, character_level):
+	if character_level:
+		result = reverse_tokenization_character_level(sequences, tokenizer)
+	else:
+		result = reverse_tokenization_word_level(sequences, tokenizer)
+
+	if len(result) == 1:
+		result = result[0]
+	return result

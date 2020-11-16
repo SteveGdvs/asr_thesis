@@ -3,7 +3,7 @@ import unicodedata
 
 import numpy as np
 
-from .constants import WORD_START_TOKEN, WORD_END_TOKEN
+from .constants import WORD_START_TOKEN, WORD_END_TOKEN, WORD_PAD_TOKEN
 
 
 def unicode_to_ascii(unicode_str):
@@ -16,50 +16,40 @@ def unicode_to_ascii(unicode_str):
 	return ascii_str
 
 
-def unicode_to_ascii_from_texts(input_texts, target_texts):
-	processed_in_txt = []
-	processed_tar_txt = []
+def unicode_to_ascii_from_texts(texts):
+	processed_txt = []
 
-	for in_txt, tar_txt in zip(input_texts, target_texts):
-		processed_in_txt.append(unicode_to_ascii(in_txt))
-		processed_tar_txt.append(unicode_to_ascii(tar_txt))
+	for txt in texts:
+		processed_txt.append(unicode_to_ascii(txt))
 
-	return processed_in_txt, processed_tar_txt
+	return processed_txt
 
 
-def remove_numbers_from_texts(input_texts, target_texts):
-	processed_in_txt = []
-	processed_tar_txt = []
+def remove_numbers_from_texts(texts):
+	processed_txt = []
 
 	numbers_match = re.compile(r"(\d+)(:?)")
-	for in_txt, tar_txt in zip(input_texts, target_texts):
-		in_tmp = numbers_match.sub(" ", in_txt)
-		tar_tmp = numbers_match.sub(" ", tar_txt)
-		in_tmp = " ".join(in_tmp.split())  # remove extra whitespaces
-		tar_tmp = " ".join(tar_tmp.split())  # remove extra whitespaces
-		processed_in_txt.append(in_tmp)
-		processed_tar_txt.append(tar_tmp)
+	for txt in texts:
+		tmp = numbers_match.sub(" ", txt)
+		tmp = " ".join(tmp.split())  # remove extra whitespaces
+		processed_txt.append(tmp)
 
-	return processed_in_txt, processed_tar_txt
+	return processed_txt
 
 
-def add_space_between_word_punctuation(input_texts, target_texts):
-	processed_in_txt = []
-	processed_tar_txt = []
+def add_space_between_word_punctuation(texts):
+	processed_txt = []
 
 	numbers_match = re.compile(r"([?.!,;:'])")
-	for in_txt, tar_txt in zip(input_texts, target_texts):
-		in_tmp = numbers_match.sub(r" \1 ", in_txt)
-		tar_tmp = numbers_match.sub(r" \1 ", tar_txt)
-		in_tmp = " ".join(in_tmp.split())  # remove extra whitespaces
-		tar_tmp = " ".join(tar_tmp.split())  # remove extra whitespaces
-		processed_in_txt.append(in_tmp)
-		processed_tar_txt.append(tar_tmp)
+	for txt in texts:
+		tmp = numbers_match.sub(r" \1 ", txt)
+		tmp = " ".join(tmp.split())  # remove extra whitespaces
+		processed_txt.append(tmp)
 
-	return processed_in_txt, processed_tar_txt
+	return processed_txt
 
 
-def reverse_one_hot_characters(sequences, tokenizer):
+def reverse_one_hot_character_level(sequences, tokenizer):
 	result = []
 
 	if len(sequences.shape) != 3:
@@ -74,7 +64,7 @@ def reverse_one_hot_characters(sequences, tokenizer):
 	return result
 
 
-def reverse_one_hot_words(sequences, tokenizer):
+def reverse_one_hot_word_level(sequences, tokenizer):
 	result = []
 
 	if len(sequences.shape) != 3:
@@ -84,7 +74,39 @@ def reverse_one_hot_words(sequences, tokenizer):
 		out = []
 		for word in sentence:
 			decoded_word = tokenizer.index_word[np.argmax(word)]
-			if decoded_word != WORD_START_TOKEN and decoded_word != WORD_END_TOKEN:
+			if decoded_word != WORD_START_TOKEN and decoded_word != WORD_END_TOKEN and decoded_word != WORD_PAD_TOKEN:
+				out.append(decoded_word)
+		result.append(" ".join(out))
+
+	return result
+
+
+def reverse_tokenization_character_level(sequences, tokenizer):
+	result = []
+
+	if len(sequences.shape) != 2:
+		sequences = [sequences]
+
+	for sentence in sequences:
+		out = ""
+		for char in sentence:
+			out = out + tokenizer.index_word[char]
+		result.append(out.strip())
+
+	return result
+
+
+def reverse_tokenization_word_level(sequences, tokenizer):
+	result = []
+
+	if len(sequences.shape) != 2:
+		sequences = [sequences]
+
+	for sentence in sequences:
+		out = []
+		for word in sentence:
+			decoded_word = tokenizer.index_word[word]
+			if decoded_word != WORD_START_TOKEN and decoded_word != WORD_END_TOKEN and decoded_word != WORD_PAD_TOKEN:
 				out.append(decoded_word)
 		result.append(" ".join(out))
 
