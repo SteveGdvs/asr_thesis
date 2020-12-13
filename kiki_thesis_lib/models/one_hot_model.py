@@ -65,7 +65,7 @@ class OneHotSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq {0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq_{0}".format(self._rnn_type))
 		return model
 
 	def _create_gru(self):
@@ -84,7 +84,7 @@ class OneHotSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq {0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq_{0}".format(self._rnn_type))
 		return model
 
 	def _create_bidirectional_lstm(self):
@@ -105,7 +105,7 @@ class OneHotSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq {0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq_{0}".format(self._rnn_type))
 		return model
 
 	def _create_bidirectional_gru(self):
@@ -125,7 +125,7 @@ class OneHotSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq {0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="OneHotSeq2Seq_{0}".format(self._rnn_type))
 		return model
 
 	def fit(self, data, epochs, validation_data=None, callbacks=None, **kwargs):
