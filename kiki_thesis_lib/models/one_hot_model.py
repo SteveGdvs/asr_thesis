@@ -282,8 +282,8 @@ class OneHotSeq2Seq(Seq2Seq):
 		axs[1].plot(self._train_history["accuracy"], label="train accuracy")
 		axs[1].plot(self._train_history["val_accuracy"], label="Validation accuracy")
 
-		axs[0].set_xlabel('Loss')
-		axs[1].set_xlabel('Accuracy')
+		axs[0].set_ylabel('Loss')
+		axs[1].set_ylabel('Accuracy')
 
 		axs[1].set_xlabel('Epochs')
 		axs[0].legend()
