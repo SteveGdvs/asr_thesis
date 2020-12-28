@@ -9,20 +9,20 @@ def file_to_waveform(filename):
 
 
 def preprocess_label(label):
-	return "\t" + label.strip() + "\n"
+	return label.strip()
 
 
 def to_spectrogram(input_data, label_sequence):
 	audio = input_data[0]
 	audio = tf.cast(audio, tf.float32)
 	audio = audio / 32768.0
-	spectrogram = tfio.experimental.audio.spectrogram(audio, nfft=256, window=512, stride=128)
+	spectrogram = tfio.experimental.audio.spectrogram(audio, nfft=512, window=512, stride=128) # nfft=256
 	return (spectrogram, input_data[1]), label_sequence
 
 
 def to_mel_spectrogram(input_data, label_sequence):
 	spectrogram = input_data[0]
-	mel_spectrogram = tfio.experimental.audio.melscale(spectrogram, rate=16000, mels=128, fmin=0, fmax=8000)
+	mel_spectrogram = tfio.experimental.audio.melscale(spectrogram, rate=16000, mels=128, fmin=0, fmax=8000) # mels = 64 if nfft=256 or verify graph
 	return (mel_spectrogram, input_data[1]), label_sequence
 
 
