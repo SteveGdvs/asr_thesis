@@ -1,12 +1,10 @@
 import pickle
 
-import matplotlib.pyplot as plt
 import numpy as np
 from tensorflow import keras
 
 from .abstract_model import Seq2Seq
 from ..utils import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
-
 
 
 class EmbeddingSeq2Seq(Seq2Seq):
@@ -20,22 +18,28 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		self._rnn_type = rnn_type.lower()
 		self._rnn_size = rnn_size
 		self._embedding_size = embedding_size
+		self._num_decoder_tokens = num_decoder_tokens
+		self._num_encoder_tokens = num_encoder_tokens
+		self._character_level = character_level
+		self._max_decoder_seq_length = max_decoder_seq_length
+		self._target_token_index = target_token_index
+		self._target_index_token = target_index_token
 
 		self._train_history = None
 		self._model = None
 		self._inference_models = None
 
-		self._character_level = character_level
-		self._num_decoder_tokens = num_decoder_tokens
-		self._num_encoder_tokens = num_encoder_tokens
-		self._max_decoder_seq_length = max_decoder_seq_length
-		self._target_token_index = target_token_index
-		self._target_index_token = target_index_token
+	@property
+	def name(self):
+		if self._character_level:
+			return "EmbeddingSeq2Seq_{0}_{1}_character_level".format(self._rnn_type, self._rnn_size)
+		else:
+			return "EmbeddingSeq2Seq_{0}_{1}_word_level".format(self._rnn_type, self._rnn_size)
 
 	def create_model(self, optimizer=None, line_length=300, summary=True):
 
 		if optimizer is None:
-			optimizer = keras.optimizers.RMSprop(learning_rate=0.01)
+			optimizer = super(EmbeddingSeq2Seq, self).get_default_optimizer()
 
 		if self._rnn_type == "lstm":
 			self._model = self._create_lstm()
@@ -58,7 +62,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		encoder_embedding = keras.layers.Embedding(self._num_encoder_tokens, self._embedding_size, name="encoder_embedding")(encoder_inputs)
 		# encoder
 		encoder = keras.layers.LSTM(self._rnn_size, return_state=True, name="encoder")
-		encoder_outputs, state_h, state_c = encoder(encoder_embedding)
+		_, state_h, state_c = encoder(encoder_embedding)
 		encoder_states = [state_h, state_c]
 		# decoder input
 		decoder_inputs = keras.layers.Input(shape=(None,), name="decoder_input")
@@ -71,7 +75,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq_{0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self.name)
 		return model
 
 	def _create_gru(self):
@@ -81,7 +85,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		encoder_embedding = keras.layers.Embedding(self._num_encoder_tokens, self._embedding_size, name="encoder_embedding")(encoder_inputs)
 		# encoder
 		encoder = keras.layers.GRU(self._rnn_size, return_state=True, name="encoder")
-		encoder_outputs, state = encoder(encoder_embedding)
+		_, state = encoder(encoder_embedding)
 		encoder_states = [state]
 		# decoder input
 		decoder_inputs = keras.layers.Input(shape=(None,), name="decoder_input")
@@ -94,7 +98,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq_{0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self.name)
 		return model
 
 	def _create_bidirectional_lstm(self):
@@ -104,7 +108,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		encoder_embedding = keras.layers.Embedding(self._num_encoder_tokens, self._embedding_size, name="encoder_embedding")(encoder_inputs)
 		# encoder
 		encoder = keras.layers.Bidirectional(keras.layers.LSTM(self._rnn_size, return_state=True), name="encoder")
-		encoder_outputs, fstate_h, fstate_c, bstate_h, bstate_c = encoder(encoder_embedding)
+		_, fstate_h, fstate_c, bstate_h, bstate_c = encoder(encoder_embedding)
 		state_h = keras.layers.Concatenate()([fstate_h, bstate_h])
 		state_c = keras.layers.Concatenate()([fstate_c, bstate_c])
 		encoder_states = [state_h, state_c]
@@ -119,7 +123,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq_{0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self.name)
 		return model
 
 	def _create_bidirectional_gru(self):
@@ -129,7 +133,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		encoder_embedding = keras.layers.Embedding(self._num_encoder_tokens, self._embedding_size, name="encoder_embedding")(encoder_inputs)
 		# encoder
 		encoder = keras.layers.Bidirectional(keras.layers.GRU(self._rnn_size, return_state=True), name="encoder")
-		encoder_outputs, fstate, bstate = encoder(encoder_embedding)
+		_, fstate, bstate = encoder(encoder_embedding)
 		state = keras.layers.Concatenate()([fstate, bstate])
 		encoder_states = [state]
 		# decoder input
@@ -143,7 +147,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		decoder_dense = keras.layers.Dense(self._num_decoder_tokens, activation='softmax', name="decoder_dense")
 		dense_outputs = decoder_dense(decoder_outputs)
 
-		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name="EmbeddingSeq2Seq_{0}".format(self._rnn_type))
+		model = keras.Model([encoder_inputs, decoder_inputs], dense_outputs, name=self.name)
 		return model
 
 	def fit(self, data, epochs, validation_data=None, callbacks=None, **kwargs):
@@ -277,6 +281,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 				"num_encoder_tokens": self._num_encoder_tokens,
 				"num_decoder_tokens": self._num_decoder_tokens,
 				"character_level": self._character_level,
+				"max_decoder_seq_length": self._max_decoder_seq_length,
 				"train_history": self._train_history,
 				"target_token_index": self._target_token_index,
 				"target_index_token": self._target_index_token
@@ -287,28 +292,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 			raise ValueError("You must first create a model before saving it")
 
 	def plot_history(self, figsize=(25, 15)):
-		fig, axs = plt.subplots(2, figsize=figsize)
-		if self._character_level:
-			fig.suptitle("EmbeddingSeq2Seq: {0} Character level tokenization".format(self._rnn_type))
-		else:
-			fig.suptitle("EmbeddingSeq2Seq {0} Word level tokenization".format(self._rnn_type))
-		axs[0].set_title("Train loss and accuracy")
-		axs[0].plot(self._train_history["loss"], label="train loss")
-		axs[0].plot(self._train_history["val_loss"], label="validation loss")
-
-		axs[1].set_title("Validation loss and accuracy")
-		axs[1].plot(self._train_history["accuracy"], label="train accuracy")
-		axs[1].plot(self._train_history["val_accuracy"], label="validation accuracy")
-
-		axs[0].set_xlabel('Loss')
-		axs[1].set_xlabel('Accuracy')
-
-		axs[1].set_xlabel('Epochs')
-		axs[0].legend()
-		axs[1].legend()
-
-		fig.subplots_adjust(hspace=0.3)
-		fig.show()
+		super(EmbeddingSeq2Seq, self)._plot_history(history=self._train_history, name=self.name, figsize=figsize)
 
 	def get_history(self):
 		return self._train_history
