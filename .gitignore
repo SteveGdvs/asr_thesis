@@ -3,10 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-main.py
 *.txt
-
 .idea
-/steve/datasets/
-/steve/model_steve-*.zip
-/steve/model_steve/
+/tests/*
