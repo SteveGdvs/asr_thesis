@@ -121,7 +121,7 @@ def word_level_tokenization(input_texts, target_texts, to_lower=True, to_ascii=T
 	input_texts = add_space_between_word_punctuation(input_texts)
 	target_texts = add_space_between_word_punctuation(target_texts)
 
-	input_texts = [WORD_START_TOKEN + " " + sentence + " " + WORD_END_TOKEN for sentence in input_texts]
+	#input_texts = [WORD_START_TOKEN + " " + sentence + " " + WORD_END_TOKEN for sentence in input_texts]
 	target_texts = [WORD_START_TOKEN + " " + sentence + " " + WORD_END_TOKEN for sentence in target_texts]
 
 	input_tokenizer = Tokenizer(filters='', char_level=False, lower=to_lower)
