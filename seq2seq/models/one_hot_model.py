@@ -35,10 +35,16 @@ class OneHotSeq2Seq(Seq2Seq):
 		else:
 			return "OneHotSeq2Seq_{0}_{1}_word_level".format(self._rnn_type, self._rnn_size)
 
-	def create_model(self, optimizer=None, line_length=300, summary=True):
+	def create_model(self, optimizer=None, metrics=None, line_length=300, summary=True):
 
 		if optimizer is None:
 			optimizer = super(OneHotSeq2Seq, self).get_default_optimizer()
+
+		if metrics is None:
+			metrics = ["accuracy"]
+		else:
+			if "accuracy" not in metrics:
+				metrics.insert(0, "accuracy")
 
 		if self._rnn_type == "lstm":
 			self._model = self._create_lstm()
@@ -49,7 +55,7 @@ class OneHotSeq2Seq(Seq2Seq):
 		elif self._rnn_type == "bi_gru":
 			self._model = self._create_bidirectional_gru()
 
-		self._model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(), metrics=["accuracy"])
+		self._model.compile(optimizer=optimizer, loss=keras.losses.CategoricalCrossentropy(), metrics=metrics)
 
 		if summary:
 			self._model.summary(line_length)
@@ -140,6 +146,9 @@ class OneHotSeq2Seq(Seq2Seq):
 
 		else:
 			raise ValueError("You must first create a model before calling fit")
+
+	def evaluate(self, data, **kwargs):
+		return self._model.evaluate(data)
 
 	def _create_inference_models(self):
 		encoder_inputs = self._model.get_layer("encoder_input").input  # input_1
