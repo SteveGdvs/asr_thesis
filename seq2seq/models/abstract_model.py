@@ -15,6 +15,10 @@ class Seq2Seq(ABC):
 		pass
 
 	@abstractmethod
+	def evaluate(self, data, **kwargs):
+		pass
+
+	@abstractmethod
 	def decode_sequence(self, input_seq):
 		pass
 
