@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 # https://keras.io/examples/vision/captcha_ocr/
 class CTCLayer(tf.keras.layers.Layer):
 	def __init__(self, name=None):

@@ -1,77 +1,10 @@
-import numpy as np
 import tensorflow as tf
-
-from .constants import WORD_START_TOKEN, WORD_END_TOKEN, WORD_PAD_TOKEN
 
 
 def file_to_waveform(filename):
 	audio_binary = tf.io.read_file(filename)
 	waveform, _ = tf.audio.decode_wav(audio_binary)
 	return tf.squeeze(waveform, axis=-1)
-
-
-def reverse_one_hot_character_level(sequences, tokenizer):
-	result = []
-
-	if len(sequences.shape) != 3:
-		sequences = [sequences]
-
-	for sentence in sequences:
-		out = ""
-		for char in sentence:
-			out = out + tokenizer.index_word[np.argmax(char)]
-		result.append(out.strip())
-
-	return result
-
-
-def reverse_one_hot_word_level(sequences, tokenizer):
-	result = []
-
-	if len(sequences.shape) != 3:
-		sequences = [sequences]
-
-	for sentence in sequences:
-		out = []
-		for word in sentence:
-			decoded_word = tokenizer.index_word[np.argmax(word)]
-			if decoded_word != WORD_START_TOKEN and decoded_word != WORD_END_TOKEN and decoded_word != WORD_PAD_TOKEN:
-				out.append(decoded_word)
-		result.append(" ".join(out))
-
-	return result
-
-
-def reverse_tokenization_character_level(sequences, tokenizer):
-	result = []
-
-	if len(sequences.shape) != 2:
-		sequences = [sequences]
-
-	for sentence in sequences:
-		out = ""
-		for char in sentence:
-			out = out + tokenizer.index_word[char]
-		result.append(out.strip())
-
-	return result
-
-
-def reverse_tokenization_word_level(sequences, tokenizer):
-	result = []
-
-	if len(sequences.shape) != 2:
-		sequences = [sequences]
-
-	for sentence in sequences:
-		out = []
-		for word in sentence:
-			decoded_word = tokenizer.index_word[word]
-			if decoded_word != WORD_START_TOKEN and decoded_word != WORD_END_TOKEN and decoded_word != WORD_PAD_TOKEN:
-				out.append(decoded_word)
-		result.append(" ".join(out))
-
-	return result
 
 
 def split_ds(ds: tf.data.Dataset, val_percentage=None, test_percentage=None, buffer_size=None):

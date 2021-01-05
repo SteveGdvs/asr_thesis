@@ -5,11 +5,11 @@ from nltk.translate import gleu_score
 
 
 def sentence_gleu(reference: str, prediction: str):
-	return gleu_score.sentence_gleu([reference], prediction)
+	return gleu_score.sentence_gleu([reference.strip()], prediction.strip())
 
 
-def sentence_bleu(reference: str, prediction: str, smoothing_function=bleu_score.SmoothingFunction().method1):
-	return bleu_score.sentence_bleu([reference], prediction, smoothing_function=smoothing_function)
+def sentence_bleu(reference: str, prediction: str):
+	return bleu_score.sentence_bleu([reference.strip()], prediction.strip())
 
 
 def sentence_wer(reference: str, prediction: str):
@@ -24,9 +24,9 @@ def sentence_wer(reference: str, prediction: str):
 		jiwer.RemoveEmptyStrings(),
 	])
 
-	return jiwer.wer(reference, prediction, truth_transform=transformation, hypothesis_transform=transformation)
+	return jiwer.wer(reference.strip(), prediction.strip(), truth_transform=transformation, hypothesis_transform=transformation)
 
 
 def sentence_cer(reference: str, prediction: str):
-	i_s_d = distance.edit_distance(prediction, reference)
-	return i_s_d/len(reference)
+	i_s_d = distance.edit_distance(prediction.strip(), reference.strip())
+	return i_s_d / len(reference.strip())

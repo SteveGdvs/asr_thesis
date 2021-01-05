@@ -4,12 +4,13 @@ import numpy as np
 from tensorflow import keras
 
 from .abstract_model import Seq2Seq
-from ..utils import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
+from ...preprocessing.constants import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
+from ...preprocessing.utils import reverse_tokenization
 
 
 class OneHotSeq2Seq(Seq2Seq):
 
-	def __init__(self, rnn_type, rnn_size, num_encoder_tokens, num_decoder_tokens, target_token_index, target_index_token, max_decoder_seq_length, character_level):
+	def __init__(self, rnn_type, rnn_size, num_encoder_tokens, num_decoder_tokens, target_token_to_index, target_index_to_token, max_decoder_seq_length, character_level):
 		acceptable_rnn_types = ("lstm", "gru", "bi_lstm", "bi_gru")
 
 		if rnn_type is None or rnn_type.lower() not in acceptable_rnn_types:
@@ -21,8 +22,8 @@ class OneHotSeq2Seq(Seq2Seq):
 		self._num_encoder_tokens = num_encoder_tokens
 		self._character_level = character_level
 		self._max_decoder_seq_length = max_decoder_seq_length
-		self._target_token_index = target_token_index
-		self._target_index_token = target_index_token
+		self._target_token_to_index = target_token_to_index
+		self._target_index_to_token = target_index_to_token
 
 		self._train_history = None
 		self._model = None
@@ -188,17 +189,15 @@ class OneHotSeq2Seq(Seq2Seq):
 		return encoder_model, decoder_model
 
 	def decode_sequence(self, input_seq):
-		target_token_index = self._target_token_index
-		reverse_target_token_index = self._target_index_token
+		target_token_to_index = self._target_token_to_index
+		reverse_target_token_index = self._target_index_to_token
 
 		if self._character_level:
-			start_token = CHARACTER_START_TOKEN
-			end_token = CHARACTER_END_TOKEN
-			join_str = ""
+			start_token_index = target_token_to_index(CHARACTER_START_TOKEN).numpy()
+			end_token_index = target_token_to_index(CHARACTER_END_TOKEN).numpy()
 		else:
-			start_token = WORD_START_TOKEN
-			end_token = WORD_END_TOKEN
-			join_str = " "
+			start_token_index = target_token_to_index(WORD_START_TOKEN).numpy()
+			end_token_index = target_token_to_index(WORD_END_TOKEN).numpy()
 
 		if self._inference_models is None:
 			encoder_model, decoder_model = self._create_inference_models()
@@ -212,14 +211,14 @@ class OneHotSeq2Seq(Seq2Seq):
 			states_value = [states_value]
 
 		# Generate empty target sequence of length 1.
-		target_seq = np.zeros((1, 1, self._num_decoder_tokens))
+		target_seq = np.zeros((input_seq.shape[0], 1, self._num_decoder_tokens))
 		# Populate the first character of target sequence with the start character.
-		target_seq[0, 0, target_token_index[start_token]] = 1.0
+		target_seq[:, 0, start_token_index] = 1.0
 
 		# Sampling loop for a batch of sequences
 		# (to simplify, here we assume a batch of size 1).
 		stop_condition = False
-		decoded_sentence = []
+		decoded_sentence_indexes = []
 
 		while not stop_condition:
 			output_tokens_and_states = decoder_model.predict([target_seq] + states_value)
@@ -228,21 +227,23 @@ class OneHotSeq2Seq(Seq2Seq):
 			states_value = output_tokens_and_states[1:]
 
 			# Sample a token
-			sampled_token_index = np.argmax(output_tokens[0, -1, :])
-			sampled_token = reverse_target_token_index[sampled_token_index]
+			sampled_token_index = np.argmax(output_tokens, axis=2)
 
 			# Exit condition: either hit max length
 			# or find stop character.
-			if sampled_token == end_token or len(decoded_sentence) > self._max_decoder_seq_length:
+			# if sampled_token_index == end_token_index or len(decoded_sentence_indexes) > self._max_decoder_seq_length:
+			if np.all(sampled_token_index.flatten() == 0) or np.all(sampled_token_index.flatten() == end_token_index) or len(decoded_sentence_indexes) > self._max_decoder_seq_length:
 				stop_condition = True
 			else:
-				decoded_sentence.append(sampled_token)
+				decoded_sentence_indexes.append(sampled_token_index)
 
 			# Update the target sequence (of length 1).
-			target_seq = np.zeros((1, 1, self._num_decoder_tokens))
-			target_seq[0, 0, sampled_token_index] = 1.0
+			target_seq = np.zeros((input_seq.shape[0], 1, self._num_decoder_tokens))
+			for i, idx in enumerate(sampled_token_index):
+				target_seq[i, 0, idx] = 1.0
 
-		return join_str.join(decoded_sentence)
+		decoded_sentence_indexes = np.stack(np.squeeze(decoded_sentence_indexes), axis=1)
+		return reverse_tokenization(np.array(decoded_sentence_indexes), reverse_target_token_index, self._character_level)
 
 	@classmethod
 	def load(cls, location):
@@ -256,8 +257,8 @@ class OneHotSeq2Seq(Seq2Seq):
 			num_decoder_tokens=attributes["num_decoder_tokens"],
 			character_level=attributes["character_level"],
 			max_decoder_seq_length=attributes["max_decoder_seq_length"],
-			target_token_index=attributes["target_token_index"],
-			target_index_token=attributes["target_index_token"]
+			target_token_to_index=attributes["target_token_to_index"],
+			target_index_to_token=attributes["target_index_to_token"]
 		)
 		new_cls._model = model
 		new_cls._train_history = attributes["train_history"]
@@ -274,8 +275,8 @@ class OneHotSeq2Seq(Seq2Seq):
 				"num_decoder_tokens": self._num_decoder_tokens,
 				"character_level": self._character_level,
 				"max_decoder_seq_length": self._max_decoder_seq_length,
-				"target_token_index": self._target_token_index,
-				"target_index_token": self._target_index_token,
+				"target_token_to_index": self._target_token_to_index,
+				"target_index_to_token": self._target_index_to_token,
 				"train_history": self._train_history,
 			}
 			with open(location + '/attributes.pickle', 'wb') as handle:

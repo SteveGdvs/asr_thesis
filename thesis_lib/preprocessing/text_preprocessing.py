@@ -43,3 +43,17 @@ def add_space_between_word_punctuation(texts):
 		processed_txt.append(tmp)
 
 	return processed_txt
+
+
+def create_vocab(texts, character_level):
+	vocab = []
+
+	if character_level:
+		for text in texts:
+			for char in text:
+				vocab.append(char)
+	else:
+		for text in texts:
+			vocab.extend(text.split())
+
+	return set(vocab)
