@@ -221,7 +221,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 					break
 		return new_sentences_indexes
 
-	def decode_sequence(self, input_seq):
+	def decode_sequences(self, input_seq):
 		target_token_to_index = self._target_token_to_index
 		reverse_target_token_index = self._target_index_to_token
 

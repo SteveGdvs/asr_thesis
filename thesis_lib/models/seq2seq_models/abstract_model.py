@@ -19,7 +19,7 @@ class Seq2Seq(ABC):
 		pass
 
 	@abstractmethod
-	def decode_sequence(self, input_seq):
+	def decode_sequences(self, input_seq):
 		pass
 
 	@classmethod
@@ -54,11 +54,11 @@ class Seq2Seq(ABC):
 		fig, axs = plt.subplots(2, figsize=figsize)
 		fig.suptitle(name)
 
-		axs[0].set_title("Train loss and accuracy")
+		axs[0].set_title("Train and Validation loss")
 		axs[0].plot(history["loss"], label="train loss")
 		axs[0].plot(history["val_loss"], label="validation loss")
 
-		axs[1].set_title("Validation loss and accuracy")
+		axs[1].set_title("Train and Validation accuracy")
 		axs[1].plot(history["accuracy"], label="train accuracy")
 		axs[1].plot(history["val_accuracy"], label="validation accuracy")
 
