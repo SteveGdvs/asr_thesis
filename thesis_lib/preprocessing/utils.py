@@ -9,13 +9,9 @@ def reverse_one_hot(sequences, num_to_vocab, character_level):
 		separator = " "
 
 	result = []
-	if len(sequences.shape) == 3:
-		for r in sequences:
-			result.append(tf.strings.reduce_join(num_to_vocab(tf.argmax(r, axis=1)), separator=separator).numpy().decode("utf-8"))
-	elif len(sequences.shape) == 2:
-		result.append(tf.strings.reduce_join(num_to_vocab(tf.argmax(sequences, axis=1)), separator=separator).numpy().decode("utf-8"))
-	else:
-		raise ValueError("Wrong input shape")
+
+	for r in sequences:
+		result.append(tf.strings.reduce_join(num_to_vocab(tf.argmax(r, axis=1)), separator=separator).numpy().decode("utf-8"))
 
 	if len(result) == 1:
 		result = result[0]
@@ -29,14 +25,10 @@ def reverse_tokenization(sequences, num_to_vocab, character_level):
 		separator = " "
 
 	result = []
-	if len(sequences.shape) == 2:
-		for r in sequences:
-			result.append(tf.strings.reduce_join(num_to_vocab(r), separator=separator).numpy().decode("utf-8"))
-	elif len(sequences.shape) == 1:
-		result.append(tf.strings.reduce_join(num_to_vocab(sequences), separator=separator).numpy().decode("utf-8"))
-	else:
-		raise ValueError("Wrong input shape")
+	for r in sequences:
+		result.append(tf.strings.reduce_join(num_to_vocab(r), separator=separator).numpy().decode("utf-8"))
 
+	#
 	if len(result) == 1:
 		result = result[0]
 	return result

@@ -206,6 +206,21 @@ class EmbeddingSeq2Seq(Seq2Seq):
 
 		return encoder_model, decoder_model
 
+	def _trim_sos_eos(self, sentences_indexes):
+
+		if self._character_level:
+			end_token_index = self._target_token_to_index(CHARACTER_END_TOKEN).numpy()
+		else:
+			end_token_index = self._target_token_to_index(WORD_END_TOKEN).numpy()
+
+		new_sentences_indexes = []
+		for sentence in sentences_indexes:
+			for i, values in enumerate(sentence):
+				if values == end_token_index:
+					new_sentences_indexes.append(sentence[:i])
+					break
+		return new_sentences_indexes
+
 	def decode_sequence(self, input_seq):
 		target_token_to_index = self._target_token_to_index
 		reverse_target_token_index = self._target_index_to_token
@@ -234,7 +249,7 @@ class EmbeddingSeq2Seq(Seq2Seq):
 		# Sampling loop for a batch of sequences
 		# (to simplify, here we assume a batch of size 1).
 		stop_condition = False
-		decoded_sentence_indexes = []
+		decoded_sentences_indexes = []
 
 		while not stop_condition:
 			output_tokens_and_states = decoder_model.predict([target_seq] + states_value)
@@ -247,16 +262,17 @@ class EmbeddingSeq2Seq(Seq2Seq):
 
 			# Exit condition: either hit max length
 			# or find stop character.
-			if np.all(sampled_token_index.flatten() == 0) or np.all(sampled_token_index.flatten() == end_token_index) or len(decoded_sentence_indexes) > self._max_decoder_seq_length:
+			if np.all(sampled_token_index.flatten() == 0) or np.all(sampled_token_index.flatten() == end_token_index) or len(decoded_sentences_indexes) > self._max_decoder_seq_length:
 				stop_condition = True
 			else:
-				decoded_sentence_indexes.append(sampled_token_index)
+				decoded_sentences_indexes.append(sampled_token_index)
 
 			# Update the target sequence (of length 1).
 			target_seq = sampled_token_index
 
-		decoded_sentence_indexes = np.stack(np.squeeze(decoded_sentence_indexes), axis=1)
-		return reverse_tokenization(np.array(decoded_sentence_indexes), reverse_target_token_index, self._character_level)
+		decoded_sentences_indexes = np.stack(np.squeeze(decoded_sentences_indexes), axis=1)
+		decoded_sentences_indexes = self._trim_sos_eos(decoded_sentences_indexes)
+		return reverse_tokenization(np.array(decoded_sentences_indexes), reverse_target_token_index, self._character_level)
 
 	@classmethod
 	def load(cls, location):
