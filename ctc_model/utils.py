@@ -1,13 +1,12 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_io as tfio
-from keras_preprocessing.text import Tokenizer
 from scipy.io import wavfile
 
 from seq2seq.utils import unicode_to_ascii_from_texts, add_space_between_word_punctuation, file_to_waveform
 
 
-def tokenize_labels(tsv, clips_path, character_level, to_lower, to_ascii, min_duration=None, max_duration=None, bitrate=16000):
+def preprocess_for_ctc_model(tsv, clips_path, character_level, to_lower, to_ascii, min_duration=None, max_duration=None, bitrate=16000):
 	tsv = [(clips_path + pair[0], pair[1].strip()) for pair in tsv]
 
 	print("Total waveforms {0}".format(len(tsv)))
@@ -34,23 +33,27 @@ def tokenize_labels(tsv, clips_path, character_level, to_lower, to_ascii, min_du
 
 	labels = [pair[1] for pair in tsv]
 	audio_files = [pair[0] for pair in tsv]
+
 	if to_ascii:
 		labels = unicode_to_ascii_from_texts(labels)
-
-	if character_level:
-		tokenizer = Tokenizer(filters='', char_level=character_level, lower=to_lower)
-		tokenizer.fit_on_texts(labels)
-	else:
+	if to_lower:
+		labels = [label.lower() for label in labels]
+	if not character_level:
 		labels = add_space_between_word_punctuation(labels)
 
-		tokenizer = Tokenizer(filters='', char_level=character_level, lower=to_lower)
-		tokenizer.fit_on_texts(labels)
+	vocab = create_vocab(labels, character_level)
 
 	maxlen = len(max(labels, key=len))
-	return list(zip(audio_files, labels)), list(tokenizer.word_index.keys()), maxlen
+
+	return list(zip(audio_files, labels)), vocab, maxlen
 
 
-def decode_batch_predictions(pred, num_to_vocab, max_length):
+def decode_batch_predictions(pred, num_to_vocab, max_length, character_level):
+	if character_level:
+		separator = ""
+	else:
+		separator = " "
+
 	input_len = np.ones(pred.shape[0]) * pred.shape[1]
 	# Use greedy search. For complex tasks, you can use beam search
 	results = tf.keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][:, :max_length]
@@ -59,7 +62,7 @@ def decode_batch_predictions(pred, num_to_vocab, max_length):
 	# Iterate over the results and get back the text
 	output_text = []
 	for res in results:
-		res = tf.strings.reduce_join(num_to_vocab(res)).numpy().decode("utf-8")
+		res = tf.strings.reduce_join(num_to_vocab(res), separator=separator).numpy().decode("utf-8")
 		output_text.append(res.strip())
 	return output_text
 
@@ -78,3 +81,17 @@ def to_mfccs_ctc(input_data, n_mfccs, vocab_to_num, character_level):
 		label_seq = vocab_to_num(tf.strings.split(input_data[1]))
 
 	return {"features_input": mfccs, "labels_input": label_seq}
+
+
+def create_vocab(texts, character_level):
+	vocab = []
+
+	if character_level:
+		for text in texts:
+			for char in text:
+				vocab.append(char)
+	else:
+		for text in texts:
+			vocab.extend(text.split())
+
+	return set(vocab)
