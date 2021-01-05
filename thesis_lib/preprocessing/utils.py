@@ -54,7 +54,7 @@ def decode_ctc_batch_predictions(pred, num_to_vocab, max_length, character_level
 
 
 def get_string_lookup(vocab):
-	vocab_to_num = tf.keras.layers.experimental.preprocessing.StringLookup(vocabulary=list(vocab), num_oov_indices=0)
-	num_to_vocab = tf.keras.layers.experimental.preprocessing.StringLookup(vocabulary=vocab_to_num.get_vocabulary(), invert=True)
+	vocab_to_num = tf.keras.layers.experimental.preprocessing.StringLookup(vocabulary=list(vocab), num_oov_indices=0, mask_token=None)
+	num_to_vocab = tf.keras.layers.experimental.preprocessing.StringLookup(vocabulary=vocab_to_num.get_vocabulary(), invert=True, mask_token=None)
 
 	return vocab_to_num, num_to_vocab
