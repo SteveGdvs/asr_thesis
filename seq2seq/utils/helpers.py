@@ -129,6 +129,6 @@ def split_ds(ds: tf.data.Dataset, val_percentage=None, test_percentage=None, buf
 		val_ds = remaining.skip(test_ds_size)
 
 		print("Train size: {0}".format(len(train_ds)))
-		print("Test size: {0}".format(len(test_ds)))
 		print("Val size: {0}".format(len(val_ds)))
+		print("Test size: {0}".format(len(test_ds)))
 		return train_ds, val_ds, test_ds,
