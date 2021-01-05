@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow import keras
 
 from .abstract_model import Seq2Seq
-from ..utils import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
+from ...utils import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
 
 
 class EmbeddingSeq2Seq(Seq2Seq):

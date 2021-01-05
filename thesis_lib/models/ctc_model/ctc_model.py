@@ -2,7 +2,7 @@ from typing import List
 
 from tensorflow import keras
 
-from ctc_model.ctc_layer import CTCLayer
+from .ctc_layer import CTCLayer
 
 
 def create_ctc_model(rnn_type, rnn_dims: List[int], input_dim: int, output_dim: int, optimizer=None, line_length=150):

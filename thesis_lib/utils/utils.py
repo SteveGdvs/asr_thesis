@@ -3,7 +3,7 @@ import tensorflow as tf
 import tensorflow_io as tfio
 from scipy.io import wavfile
 
-from seq2seq.utils import unicode_to_ascii_from_texts, add_space_between_word_punctuation, file_to_waveform
+from thesis_lib.utils import unicode_to_ascii_from_texts, add_space_between_word_punctuation, file_to_waveform
 
 
 def preprocess_for_ctc_model(tsv, clips_path, character_level, to_lower, to_ascii, min_duration=None, max_duration=None, bitrate=16000):
