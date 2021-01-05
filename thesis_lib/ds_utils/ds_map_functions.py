@@ -65,8 +65,8 @@ def to_tokenize_input_target(input_data, target_data, input_vocab_to_num, target
 	return input_data_seq, target_data_seq
 
 
-def to_seq2seq_format(input_data, target_data):
-	return (input_data, target_data), tf.concat([target_data[1:], tf.constant([0])], axis=0)
+def to_seq2seq_format(input_data, target_data, pad_value):
+	return (input_data, target_data), tf.concat([target_data[1:], tf.constant([pad_value])], axis=0)
 
 
 def to_ctc_format(input_data, target_data):
