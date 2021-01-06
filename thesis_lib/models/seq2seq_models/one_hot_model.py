@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow import keras
 
 from .abstract_model import Seq2Seq
-from ...preprocessing.constants import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN
+from ...preprocessing.constants import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN, CHARACTER_PAD_TOKEN, WORD_PAD_TOKEN
 from ...preprocessing.utils import reverse_tokenization
 
 
@@ -192,15 +192,18 @@ class OneHotSeq2Seq(Seq2Seq):
 
 		if self._character_level:
 			end_token_index = self._target_token_to_index(CHARACTER_END_TOKEN).numpy()
+			pad_token = self._target_token_to_index(CHARACTER_PAD_TOKEN).numpy()
 		else:
 			end_token_index = self._target_token_to_index(WORD_END_TOKEN).numpy()
+			pad_token = self._target_token_to_index(WORD_PAD_TOKEN).numpy()
 
 		new_sentences_indexes = []
 		for sentence in sentences_indexes:
 			for i, values in enumerate(sentence):
 				if values == end_token_index:
-					new_sentences_indexes.append(sentence[:i])
+					sentence[i:] = pad_token
 					break
+			new_sentences_indexes.append(sentence)
 		return new_sentences_indexes
 
 	def decode_sequences(self, input_seq):
