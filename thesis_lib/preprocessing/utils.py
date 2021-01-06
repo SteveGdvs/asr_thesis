@@ -1,17 +1,30 @@
 import numpy as np
 import tensorflow as tf
 
+from thesis_lib.preprocessing.constants import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, CHARACTER_PAD_TOKEN, WORD_START_TOKEN, WORD_END_TOKEN, WORD_PAD_TOKEN
+
 
 def reverse_one_hot(sequences, num_to_vocab, character_level):
 	if character_level:
 		separator = ""
+		eos = CHARACTER_START_TOKEN
+		sos = CHARACTER_END_TOKEN
+		pad = CHARACTER_PAD_TOKEN
 	else:
 		separator = " "
+		eos = WORD_START_TOKEN
+		sos = WORD_END_TOKEN
+		pad = WORD_PAD_TOKEN
 
 	result = []
 
 	for r in sequences:
-		result.append(tf.strings.reduce_join(num_to_vocab(tf.argmax(r, axis=1)), separator=separator).numpy().decode("utf-8"))
+		sentence = tf.strings.reduce_join(num_to_vocab(tf.argmax(r, axis=1)), separator=separator).numpy().decode("utf-8")
+		sentence = sentence.replace(eos, "")
+		sentence = sentence.replace(sos, "")
+		sentence = sentence.replace(pad, "")
+		sentence = sentence.strip()
+		result.append(sentence)
 
 	if len(result) == 1:
 		result = result[0]
@@ -21,14 +34,24 @@ def reverse_one_hot(sequences, num_to_vocab, character_level):
 def reverse_tokenization(sequences, num_to_vocab, character_level):
 	if character_level:
 		separator = ""
+		eos = CHARACTER_START_TOKEN
+		sos = CHARACTER_END_TOKEN
+		pad = CHARACTER_PAD_TOKEN
 	else:
 		separator = " "
+		eos = WORD_START_TOKEN
+		sos = WORD_END_TOKEN
+		pad = WORD_PAD_TOKEN
 
 	result = []
 	for r in sequences:
-		result.append(tf.strings.reduce_join(num_to_vocab(r), separator=separator).numpy().decode("utf-8"))
+		sentence = tf.strings.reduce_join(num_to_vocab(r), separator=separator).numpy().decode("utf-8")
+		sentence = sentence.replace(eos, "")
+		sentence = sentence.replace(sos, "")
+		sentence = sentence.replace(pad, "")
+		sentence = sentence.strip()
+		result.append(sentence)
 
-	#
 	if len(result) == 1:
 		result = result[0]
 	return result

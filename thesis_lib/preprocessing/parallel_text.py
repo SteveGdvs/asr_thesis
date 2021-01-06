@@ -20,7 +20,7 @@ def preprocess_text_pairs_for_seq2seq(text_pairs, character_level, to_lower, to_
 
 	if character_level:
 		target_texts = [CHARACTER_START_TOKEN + sentence + CHARACTER_END_TOKEN for sentence in target_texts]
-		input_vocab = create_vocab(input_texts, character_level)
+		input_vocab = create_vocab(input_texts+[CHARACTER_PAD_TOKEN], character_level)
 		target_vocab = create_vocab(target_texts+[CHARACTER_PAD_TOKEN], character_level)
 
 	else:
@@ -29,7 +29,7 @@ def preprocess_text_pairs_for_seq2seq(text_pairs, character_level, to_lower, to_
 
 		target_texts = [WORD_START_TOKEN + " " + sentence + " " + WORD_END_TOKEN for sentence in target_texts]
 
-		input_vocab = create_vocab(input_texts, character_level)
+		input_vocab = create_vocab(input_texts+[WORD_PAD_TOKEN], character_level)
 		target_vocab = create_vocab(target_texts+[WORD_PAD_TOKEN], character_level)
 
 	return (input_texts, target_texts), (input_vocab, target_vocab)
