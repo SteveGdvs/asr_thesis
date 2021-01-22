@@ -1,5 +1,7 @@
-from scipy.io import wavfile
+import wave
+
 from tqdm import tqdm
+
 from .constants import CHARACTER_START_TOKEN, CHARACTER_END_TOKEN, WORD_END_TOKEN, WORD_START_TOKEN, CHARACTER_PAD_TOKEN, WORD_PAD_TOKEN
 from .text_preprocessing import unicode_to_ascii_from_texts, add_space_between_word_punctuation, create_vocab
 
@@ -11,8 +13,10 @@ def preprocess_cv(tsv, clips_path, character_level, to_lower, to_ascii, min_dura
 	if min_duration:
 		new_tsv = []
 		for audio_file_path, label in tqdm(tsv):
-			_, waveform = wavfile.read(audio_file_path)
-			if waveform.shape[0] / bitrate > min_duration:
+			with wave.open(audio_file_path, 'rb') as wf:
+				frames = wf.getnframes()
+				duration = frames / bitrate
+			if duration > min_duration:
 				new_tsv.append((audio_file_path, label))
 		print("Removed {0} waveform with duration less than {1}".format(len(tsv) - len(new_tsv), min_duration))
 		tsv = new_tsv
@@ -20,8 +24,10 @@ def preprocess_cv(tsv, clips_path, character_level, to_lower, to_ascii, min_dura
 	if max_duration:
 		new_tsv = []
 		for audio_file_path, label in tqdm(tsv):
-			_, waveform = wavfile.read(audio_file_path)
-			if waveform.shape[0] / bitrate < max_duration:
+			with wave.open(audio_file_path, 'rb') as wf:
+				frames = wf.getnframes()
+				duration = frames / bitrate
+			if duration < max_duration:
 				new_tsv.append((audio_file_path, label))
 
 		print("Removed {0} waveform with duration more than {1}".format(len(tsv) - len(new_tsv), max_duration))
