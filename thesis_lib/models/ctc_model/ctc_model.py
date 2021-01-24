@@ -33,7 +33,9 @@ def create_ctc_model(rnn_type, rnn_dims: List[int], input_dim: int, output_dim: 
 
 	# input layers
 	features_input = keras.layers.Input(shape=(None, input_dim), name="features_input")
-	labels = keras.layers.Input(name="labels_input", shape=(None,))
+	labels_input = keras.layers.Input(name="labels_input", shape=(None,))
+	input_length = keras.layers.Input(name='features_len', shape=[1], dtype='int32')
+	label_length = keras.layers.Input(name='labels_len', shape=[1], dtype='int32')
 	x = features_input
 
 	if bidirectional:
@@ -45,9 +47,9 @@ def create_ctc_model(rnn_type, rnn_dims: List[int], input_dim: int, output_dim: 
 
 	# output and ctc loss
 	x = keras.layers.Dense(output_dim + 1, activation="softmax", name="dense")(x)
-	output = CTCLayer(name="ctc_loss")(labels, x)
+	output = CTCLayer(blank_index=output_dim, name="ctc_loss")(labels_input, x, input_length, label_length)
 
-	model = keras.models.Model(inputs=[features_input, labels], outputs=output, name=name)
+	model = keras.models.Model(inputs=[features_input, labels_input, input_length, label_length], outputs=output, name=name)
 
 	model.compile(optimizer=optimizer)
 

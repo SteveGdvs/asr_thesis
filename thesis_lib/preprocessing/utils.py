@@ -46,20 +46,19 @@ def reverse_tokenization(sequences, num_to_vocab, character_level):
 	return result
 
 
-def decode_ctc_batch_predictions(pred, num_to_vocab, max_length, pad_value, character_level):
+def decode_ctc_batch_predictions(preds, num_to_vocab, pred_lens, max_length, character_level):
 	if character_level:
 		separator = ""
 	else:
 		separator = " "
 
-	input_len = np.ones(pred.shape[0]) * pred.shape[1]
-	# Use greedy search. For complex tasks, you can use beam search
-	results = tf.keras.backend.ctc_decode(pred, input_length=input_len, greedy=True)[0][0][:, :max_length]
+	(decoded,), _ = tf.nn.ctc_greedy_decoder(inputs=np.moveaxis(preds, [0, 1, 2], [1, 0, 2]), sequence_length=pred_lens)
+	results = tf.sparse.to_dense(decoded, default_value=-1)
 
-	results = tf.where(tf.math.equal(results, -1), pad_value, results)
 	# Iterate over the results and get back the text
 	output_text = []
 	for res in results:
+		res = res[res > 0]
 		res = tf.strings.reduce_join(num_to_vocab(res), separator=separator).numpy().decode("utf-8")
 		output_text.append(res.strip())
 	return output_text
