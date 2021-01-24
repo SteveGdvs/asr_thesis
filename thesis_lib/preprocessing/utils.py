@@ -46,7 +46,7 @@ def reverse_tokenization(sequences, num_to_vocab, character_level):
 	return result
 
 
-def decode_ctc_batch_predictions(preds, num_to_vocab, pred_lens, max_length, character_level):
+def decode_ctc_batch_predictions(preds, num_to_vocab, pred_lens, character_level):
 	if character_level:
 		separator = ""
 	else:
