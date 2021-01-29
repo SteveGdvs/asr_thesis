@@ -62,8 +62,8 @@ def to_one_hot_target_only(input_data, target_data, output_vocab_size):
 
 
 def to_tokenize_input_target(input_data, target_data, input_vocab_to_num, target_vocab_to_num, character_level):
-	input_data_seq = _str_to_sequence(input_data, input_vocab_to_num, character_level)
-	target_data_seq = _str_to_sequence(target_data, target_vocab_to_num, character_level)
+	input_data_seq, _ = _str_to_sequence(input_data, input_vocab_to_num, character_level)
+	target_data_seq, _ = _str_to_sequence(target_data, target_vocab_to_num, character_level)
 	return input_data_seq, target_data_seq
 
 
