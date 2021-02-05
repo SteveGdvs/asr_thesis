@@ -70,8 +70,7 @@ def split_ds(ds: tf.data.Dataset, val_percentage=None, test_percentage=None, buf
 		return train_ds, val_ds, test_ds,
 
 
-
-def save_preprocessed_dataset(path: Path, dataset, vocab_to_num, num_to_vocab, character_level, max_sentence_length, name="saved_dataset"):
+def save_preprocessed_dataset(path: Path, dataset, vocab_to_num, num_to_vocab, character_level, vocab_size, max_sentence_length, name="saved_dataset"):
 	path = path / name
 	path.mkdir()
 
@@ -81,6 +80,7 @@ def save_preprocessed_dataset(path: Path, dataset, vocab_to_num, num_to_vocab, c
 	info["num_to_vocab_weights"] = num_to_vocab.get_weights()
 	info["character_level"] = character_level
 	info["max_sentence_length"] = max_sentence_length
+	info["vocab_size"] = vocab_size
 
 	with open(path / 'info.pickle', 'wb') as handle:
 		pickle.dump(info, handle)
@@ -103,5 +103,6 @@ def load_preprocessed_dataset(path: Path):
 	num_to_vocab.set_weights(info["num_to_vocab_weights"])
 	character_level = info["character_level"]
 	max_sentence_length = info["max_sentence_length"]
+	vocab_size = info["vocab_size"]
 
-	return dataset, vocab_to_num, num_to_vocab, character_level, max_sentence_length
+	return dataset, vocab_to_num, num_to_vocab, character_level, vocab_size, max_sentence_length
