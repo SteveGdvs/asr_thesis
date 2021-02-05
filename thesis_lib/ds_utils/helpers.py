@@ -1,3 +1,6 @@
+import pickle
+from pathlib import Path
+
 import tensorflow as tf
 
 
@@ -65,3 +68,40 @@ def split_ds(ds: tf.data.Dataset, val_percentage=None, test_percentage=None, buf
 		print("Val size: {0}".format(len(val_ds)))
 		print("Test size: {0}".format(len(test_ds)))
 		return train_ds, val_ds, test_ds,
+
+
+
+def save_preprocessed_dataset(path: Path, dataset, vocab_to_num, num_to_vocab, character_level, max_sentence_length, name="saved_dataset"):
+	path = path / name
+	path.mkdir()
+
+	info = dict()
+	info["element_spec"] = dataset.element_spec
+	info["vocab_to_num_weights"] = vocab_to_num.get_weights()
+	info["num_to_vocab_weights"] = num_to_vocab.get_weights()
+	info["character_level"] = character_level
+	info["max_sentence_length"] = max_sentence_length
+
+	with open(path / 'info.pickle', 'wb') as handle:
+		pickle.dump(info, handle)
+
+	tf.data.experimental.save(dataset, str(path), compression="GZIP")
+
+	print("Saved at {0}".format(path))
+
+
+def load_preprocessed_dataset(path: Path):
+	with open(path / 'info.pickle', 'rb') as handle:
+		info = pickle.load(handle)
+
+	element_spec = info["element_spec"]
+	dataset = tf.data.experimental.load(str(path), element_spec=element_spec, compression="GZIP")
+
+	vocab_to_num = tf.keras.layers.experimental.preprocessing.StringLookup(num_oov_indices=0, mask_token=None)
+	vocab_to_num.set_weights(info["vocab_to_num_weights"])
+	num_to_vocab = tf.keras.layers.experimental.preprocessing.StringLookup(invert=True, mask_token=None)
+	num_to_vocab.set_weights(info["num_to_vocab_weights"])
+	character_level = info["character_level"]
+	max_sentence_length = info["max_sentence_length"]
+
+	return dataset, vocab_to_num, num_to_vocab, character_level, max_sentence_length
