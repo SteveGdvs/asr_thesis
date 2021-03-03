@@ -5,7 +5,7 @@ from tensorflow import keras
 from .ctc_layer import CTCLayer
 
 
-def create_ctc_model(rnn_type, rnn_dims: List[int], input_dim: int, output_dim: int, optimizer=None, line_length=150):
+def create_ctc_model(rnn_type, rnn_dims: List[int], input_dim: int, output_dim: int, cnn_dims: List[int] = None, optimizer=None, line_length=150):
 	rnn_type = rnn_type.lower()
 	if rnn_type == "lstm":
 		bidirectional = False
@@ -26,10 +26,7 @@ def create_ctc_model(rnn_type, rnn_dims: List[int], input_dim: int, output_dim: 
 		print("Using default optimizer RMSprop()")
 		optimizer = keras.optimizers.RMSprop()
 
-	if bidirectional:
-		name = rnn_type + "_bi" + "_model_" + "_".join([str(dim) for dim in rnn_dims])
-	else:
-		name = rnn_type + "_model_" + "_".join([str(dim) for dim in rnn_dims])
+	name = rnn_type + "_model_" + "_".join([str(dim) for dim in rnn_dims])
 
 	# input layers
 	features_input = keras.layers.Input(shape=(None, input_dim), name="features_input")
@@ -38,12 +35,16 @@ def create_ctc_model(rnn_type, rnn_dims: List[int], input_dim: int, output_dim: 
 	label_length = keras.layers.Input(name='labels_len', shape=[1], dtype='int32')
 	x = features_input
 
+	if cnn_dims:
+		for i, dim in enumerate(cnn_dims):
+			x = keras.layers.Conv1D(dim, 3, name="cnn_{0}".format(i))(x)
+
 	if bidirectional:
 		for i, dim in enumerate(rnn_dims):
-			x = keras.layers.Bidirectional(RnnLayer(dim, return_sequences=True), name="rnn_type_{0}".format(i))(x)
+			x = keras.layers.Bidirectional(RnnLayer(dim, return_sequences=True), name="rnn_{0}".format(i))(x)
 	else:
 		for i, dim in enumerate(rnn_dims):
-			x = RnnLayer(dim, return_sequences=True, name="rnn_type_{0}".format(i))(x)
+			x = RnnLayer(dim, return_sequences=True, name="rnn_{0}".format(i))(x)
 
 	# output and ctc loss
 	x = keras.layers.Dense(output_dim + 1, activation="softmax", name="dense")(x)
